@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Print Cost Calculator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- PDF.js Global Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <style>
+        .drop-zone--over {
+            border-color: #6366f1;
+            background-color: #f5f3ff;
+            transform: scale(1.01);
+        }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #c7d2fe; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #818cf8; }
+        .animate-fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+<link rel="stylesheet" href="/index.css">
+  <script type="module" crossorigin src="/pdf-calculator/assets/index-BiElP6AZ.js"></script>
+</head>
+<body class="bg-gray-50 text-gray-900 min-h-screen font-sans">
+    <div class="max-w-6xl mx-auto px-4 py-10">
+        <!-- Header -->
+        <div class="mb-10 text-center">
+            <h1 class="text-4xl font-extrabold text-gray-900 mb-2">PDF Print Cost Calculator</h1>
+            <p class="text-gray-600 text-lg">Calculate sheets and costs based on your custom printing logic</p>
+        </div>
+
+        <!-- Big Labels / Stats Summary -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+            <!-- Total PDF Pages -->
+            <div class="bg-blue-600 rounded-3xl shadow-xl shadow-blue-100/50 p-8 flex flex-col items-center justify-center text-center text-white transition-all transform hover:scale-[1.02] duration-300">
+                <p class="text-xs font-bold text-blue-100 uppercase tracking-widest mb-3">Total PDF Pages</p>
+                <p id="stat-total-pages" class="text-5xl font-black mb-3">0</p>
+                <p class="text-sm text-blue-100/90 font-medium">From uploaded files</p>
+            </div>
+            
+            <!-- Physical Sheets -->
+            <div class="bg-indigo-600 rounded-3xl shadow-xl shadow-indigo-100/50 p-8 flex flex-col items-center justify-center text-center text-white transition-all transform hover:scale-[1.02] duration-300">
+                <p class="text-xs font-bold text-indigo-100 uppercase tracking-widest mb-3">Total Sheets Needed</p>
+                <p id="stat-total-sheets" class="text-5xl font-black mb-3">0</p>
+                <p class="text-sm text-indigo-100/90 font-medium">Physical Paper Sheets</p>
+            </div>
+            
+            <!-- Total Cost -->
+            <div class="bg-emerald-600 rounded-3xl shadow-xl shadow-emerald-100/50 p-8 flex flex-col items-center justify-center text-center text-white transition-all transform hover:scale-[1.02] duration-300">
+                <p class="text-xs font-bold text-emerald-100 uppercase tracking-widest mb-3">Estimated Total Cost</p>
+                <div class="flex items-baseline justify-center mb-3">
+                    <span class="text-2xl font-bold text-emerald-100/90 mr-1">$</span>
+                    <p id="stat-total-cost" class="text-5xl font-black">0.00</p>
+                </div>
+                <p class="text-sm text-emerald-100/90 font-medium">Based on your settings</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Settings Panel -->
+            <div class="lg:col-span-1 space-y-6">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 sticky top-10">
+                    <h2 class="text-xl font-bold mb-6 flex items-center text-gray-800">
+                        <i class="fas fa-cog mr-3 text-indigo-500"></i>
+                        Settings
+                    </h2>
+                    
+                    <div class="space-y-6">
+                        <!-- Price Input -->
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-2">Price per Paper (Currency)</label>
+                            <input
+                                id="price-input"
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                value="1"
+                                class="block w-full px-4 py-3 border-2 border-gray-100 rounded-xl focus:border-indigo-500 focus:ring-0 outline-none transition-all text-lg font-semibold"
+                            />
+                        </div>
+
+                        <!-- Duplex Toggle -->
+                        <div class="p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <label class="font-bold text-gray-800 block">Double-Sided</label>
+                                    <span class="text-xs text-gray-500">Duplex Printing</span>
+                                </div>
+                                <button
+                                    id="duplex-toggle"
+                                    type="button"
+                                    class="relative inline-flex h-7 w-12 items-center rounded-full transition-colors focus:outline-none bg-gray-200"
+                                >
+                                    <span id="duplex-dot" class="inline-block h-5 w-5 transform rounded-full bg-white transition-transform translate-x-1"></span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Multiple Pages (N-up) -->
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-2">Multiple (Pages per side)</label>
+                            <select
+                                id="pages-per-side-select"
+                                class="block w-full px-4 py-3 border-2 border-gray-100 rounded-xl bg-white outline-none cursor-pointer font-semibold"
+                            >
+                                <option value="1">1 Page per side</option>
+                                <option value="2">2 Pages per side</option>
+                                <option value="4">4 Pages per side</option>
+                                <option value="6">6 Pages per side</option>
+                                <option value="9">9 Pages per side</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Panel -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- Drop Zone -->
+                <div
+                    id="drop-zone"
+                    class="group relative bg-white border-4 border-dashed border-gray-200 rounded-3xl p-12 text-center hover:border-indigo-300 hover:bg-indigo-50 transition-all cursor-pointer overflow-hidden"
+                >
+                    <!-- Input covers the whole area for simple native click handling -->
+                    <input id="file-input" type="file" multiple accept=".pdf" class="absolute inset-0 opacity-0 cursor-pointer z-10" />
+                    
+                    <div class="space-y-4 pointer-events-none relative z-0">
+                        <div class="w-20 h-20 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mx-auto group-hover:scale-110 transition-transform">
+                            <i class="fas fa-file-upload text-3xl"></i>
+                        </div>
+                        <div>
+                            <p class="text-2xl font-bold text-gray-800">Drop PDF files here</p>
+                            <p class="text-gray-500">or click to browse your computer</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- List -->
+                <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div class="p-6 border-b border-gray-100 flex justify-between items-center">
+                        <h2 class="text-xl font-bold text-gray-800">Files Details</h2>
+                        <button id="clear-all-btn" type="button" class="hidden text-sm text-red-500 hover:text-red-700 font-bold bg-red-50 px-4 py-2 rounded-lg transition-colors">
+                            Clear All
+                        </button>
+                    </div>
+                    
+                    <div id="loading-indicator" class="hidden p-16 flex flex-col items-center justify-center space-y-4">
+                        <div class="animate-spin rounded-full h-12 w-12 border-4 border-indigo-500 border-t-transparent"></div>
+                        <p class="text-gray-500 font-bold">Calculating pages...</p>
+                    </div>
+
+                    <div id="empty-state" class="p-20 text-center">
+                        <div class="text-gray-200 mb-4">
+                            <i class="fas fa-folder-open text-7xl"></i>
+                        </div>
+                        <p class="text-gray-400 font-medium">No files added yet</p>
+                    </div>
+
+                    <div id="file-list" class="divide-y divide-gray-50 max-h-[600px] overflow-y-auto"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
