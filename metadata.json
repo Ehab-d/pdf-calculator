@@ -1,0 +1,6 @@
+{
+  "name": "PDF Print Cost Calculator",
+  "description": "Calculate exact physical paper sheets for multiple PDF files with Duplex and N-up support.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
